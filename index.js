@@ -41,16 +41,16 @@ async function run() {
         res.status(500).json({ error: 'Failed to fetch upcoming volunteer posts' });
       }
     });
-
-    // app.post('/volunteer-posts/upcoming', async (req, res) => {
-    //   try {
-    //     const newPost = req.body;
-    //     const result = await volunteerCollection.insertOne(newPost);
-    //     res.status(201).json({ message: 'Volunteer post added successfully!', result });
-    //   } catch (error) {
-    //     res.status(500).json({ error: 'Failed to add volunteer post' });
-    //   }
-    // });
+    // Add a volunteer need post
+    app.post('/volunteer-posts', async (req, res) => {
+      try {
+        const newPost = req.body;
+        const result = await volunteerCollection.insertOne(newPost);
+        res.status(201).json({ message: 'Volunteer post added successfully!', result });
+      } catch (error) {
+        res.status(500).json({ error: 'Failed to add volunteer post' });
+      }
+    });
    
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
