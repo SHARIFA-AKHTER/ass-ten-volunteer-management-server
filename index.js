@@ -2,8 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 require('dotenv').config();
-const port = process.env.PORT || 5000;
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const port = process.env.PORT || 9000;
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 
 app.use(cors());
@@ -28,7 +28,7 @@ async function run() {
     const volunteerCollection = db.collection('teem')
 
 
-    app.get('/volunteer-posts/upcoming', async (req, res) => {
+    app.get('/volunteer-needs-now', async (req, res) => {
       try {
         const result = await volunteerCollection
           .find()
@@ -41,17 +41,27 @@ async function run() {
         res.status(500).json({ error: 'Failed to fetch upcoming volunteer posts' });
       }
     });
-    // Add a volunteer need post
-    app.post('/volunteer-posts', async (req, res) => {
-      try {
-        const newPost = req.body;
-        const result = await volunteerCollection.insertOne(newPost);
-        res.status(201).json({ message: 'Volunteer post added successfully!', result });
-      } catch (error) {
-        res.status(500).json({ error: 'Failed to add volunteer post' });
-      }
-    });
    
+   // Get all posts
+   app.get('/all-volunteer-posts', async (req, res) => {
+    const posts = await volunteerCollection.find({}).sort({ deadline: 1 }).toArray();
+    res.send(posts);
+  });
+
+  
+    app.get("/volunteer-needs-now/:id", async (req, res) => {
+      const { id } = req.params;
+      try {
+          const post = await volunteerCollection.findOne({ _id: new ObjectId(id) });
+          if (!post) {
+              return res.status(404).json({ message: "Post not found" });
+          }
+          res.json(post);
+      } catch (error) {
+          console.error(error);
+          res.status(500).json({ message: "Error fetching post" });
+      }
+  });
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
     // Send a ping to confirm a successful connection
