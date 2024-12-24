@@ -64,6 +64,17 @@ async function run() {
       }
   });
 
+  // add post api
+  app.post('/volunteer-needs-now', async (req, res) => {
+    try {
+      const newPost = req.body; // Get data from the request body
+      const result = await volunteerCollection.insertOne(newPost); 
+      res.status(201).json({ message: 'Volunteer post added successfully!', data: result });
+    } catch (error) {
+      console.error('Error saving volunteer post:', error);
+      res.status(500).json({ message: 'Failed to add volunteer post.' });
+    }
+  });
 
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
