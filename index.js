@@ -27,6 +27,8 @@ async function run() {
     const db = client.db('volunteer_management')
     const volunteerCollection = db.collection('teem')
 
+    const volunteerApplicationCollection = client.db('volunteer_management').collection
+    ('teem_application');
 
     app.get('/volunteer-needs-now', async (req, res) => {
       try {
@@ -64,17 +66,78 @@ async function run() {
       }
   });
 
-  // add post api
-  app.post('/volunteer-needs-now', async (req, res) => {
-    try {
-      const newPost = req.body; // Get data from the request body
-      const result = await volunteerCollection.insertOne(newPost); 
-      res.status(201).json({ message: 'Volunteer post added successfully!', data: result });
-    } catch (error) {
-      console.error('Error saving volunteer post:', error);
-      res.status(500).json({ message: 'Failed to add volunteer post.' });
-    }
-  });
+  // add post api DABBLE TAKLO FOLLOW
+    // app.post('/volunteer-needs-now', async (req, res) => {
+    //  try {
+    //   const newPost = req.body; 
+    //   const result = await volunteerCollection.insertOne(newPost); 
+    //   res.status(201).json({ message: 'Volunteer post added successfully!', data: result });
+    //  } catch (error) {
+    //   console.error('Error saving volunteer post:', error);
+    //   res.status(500).json({ message: 'Failed to add volunteer post.' });
+    //   }
+    //  });
+
+    // add post api
+    app.post('/volunteer-needs-application', async (req, res) => { 
+      const application = req.body; 
+      const result = await volunteerApplicationCollection.insertOne(application); 
+      res.send(result)
+    
+     });
+
+
+          // Route to fetch post details
+      app.get("/volunteer/:postId", async (req, res) => {
+        try {
+          const post = await volunteerCollection.findById(req.params.postId);
+          if (!post) {
+            return res.status(404).json({ message: "Post not found" });
+          }
+          res.json(post);
+        } catch (err) {
+          res.status(500).json({ message: "Error fetching post details" });
+        }
+      });
+      //     // Route to handle volunteer request submission
+      // app.post("/volunteer-request/submit", async (req, res) => {
+      //   try {
+      //     const { postId, volunteerName, volunteerEmail, suggestion } = req.body;
+
+      //     // Check if post exists
+      //     const post = await volunteerCollection.findById(postId);
+      //     if (!post) {
+      //       return res.status(404).json({ message: "Post not found" });
+      //     }
+
+      //     // Check if there are enough volunteers
+      //     if (post.volunteers <= 0) {
+      //       return res.status(400).json({ message: "No volunteers needed" });
+      //     }
+
+      //     // Create a new volunteer request
+      //     const newVolunteerRequest = new volunteerCollection({
+      //       postId,
+      //       volunteerName,
+      //       volunteerEmail,
+      //       suggestion,
+      //     });
+
+      //     // Save the volunteer request to the database
+      //     await newVolunteerRequest.save();
+
+      //     // Decrement the number of volunteers needed for the post
+      //     await volunteerCollection.findByIdAndUpdate(postId, {
+      //       $inc: { volunteers: -1 }, // Decrease the number of volunteers needed
+      //     });
+
+      //     res.status(200).json({ message: "Request submitted successfully" });
+      //   } catch (err) {
+      //     res.status(500).json({ message: "Error submitting volunteer request" });
+      //   }
+      // });
+
+
 
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
