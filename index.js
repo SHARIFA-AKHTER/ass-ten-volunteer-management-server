@@ -48,8 +48,9 @@ async function run() {
     res.send(posts);
   });
 
+  
    // Get id 
-    app.get("/volunteer-needs-now/:id", async (req, res) => {
+    app.get("/volunteer/:id", async (req, res) => {
       const { id } = req.params;
       try {
           const post = await volunteerCollection.findOne({ _id: new ObjectId(id) });
@@ -62,6 +63,8 @@ async function run() {
           res.status(500).json({ message: "Error fetching post" });
       }
   });
+
+
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
     // Send a ping to confirm a successful connection
