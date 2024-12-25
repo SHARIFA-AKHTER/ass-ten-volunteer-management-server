@@ -150,16 +150,16 @@ async function run() {
           }
         })
 
-       
-        // app.delete('/volunteer-needs/:id', async (req, res) => {
-        //   try {
-        //     const postId = req.params.id;
-        //     await VolunteerPost.findByIdAndDelete(postId);
-        //     res.json({ message: 'Post deleted successfully' });
-        //   } catch (error) {
-        //     res.status(500).json({ error: 'Error deleting post' });
-        //   }
-        // });
+        // DELETE: Delete a specific post
+        app.delete('/volunteer-needs/:id', async (req, res) => {
+          try {
+            const postId = req.params.id;
+            await VolunteerPost.findByIdAndDelete(postId);
+            res.json({ message: 'Post deleted successfully' });
+          } catch (error) {
+            res.status(500).json({ error: 'Error deleting post' });
+          }
+        });
 
 
     // Connect the client to the server	(optional starting in v4.7)
