@@ -78,7 +78,17 @@ async function run() {
     //   }
     //  });
 
-    // add post api
+    // volunteer application get
+    app.get('/volunteer-needs-application', async (req, res) => {
+      const email = req.query.email;
+      const query = {organizerEmail: email}
+      const result = await  volunteerApplicationCollection.find().toArray(query);
+
+      res.send(result);
+    });
+
+
+       // volunteer application post
     app.post('/volunteer-needs-application', async (req, res) => { 
       const application = req.body; 
       const result = await volunteerApplicationCollection.insertOne(application); 
@@ -100,43 +110,56 @@ async function run() {
         }
       });
       //     // Route to handle volunteer request submission
-      // app.post("/volunteer-request/submit", async (req, res) => {
-      //   try {
-      //     const { postId, volunteerName, volunteerEmail, suggestion } = req.body;
+    //   // volunteer-requests api
+     app.post("/volunteer-needs-application/:id", async(req, res)=>{
+      const data = req.body;
+      const result = await volunteerApplicationCollection.insertOne(data)
+      res.send(result)
+     })
 
-      //     // Check if post exists
-      //     const post = await volunteerCollection.findById(postId);
-      //     if (!post) {
-      //       return res.status(404).json({ message: "Post not found" });
-      //     }
 
-      //     // Check if there are enough volunteers
-      //     if (post.volunteers <= 0) {
-      //       return res.status(400).json({ message: "No volunteers needed" });
-      //     }
+    // My Volunteer Need Post
+     app.get('/volunteerNeed/:userId', async (req, res) => {
+        const { userId } = req.params;
+        try {
+          const posts = await volunteerCollection.find({ userId, type: 'volunteerNeed' }); 
+          res.json(posts);
+        } catch (error) {
+          res.status(500).json({ message: "Error fetching posts" });
+        }
+      });
 
-      //     // Create a new volunteer request
-      //     const newVolunteerRequest = new volunteerCollection({
-      //       postId,
-      //       volunteerName,
-      //       volunteerEmail,
-      //       suggestion,
-      //     });
+      // My Volunteer Request Post
+      app.get('/volunteerRequest/:userId', async (req, res) => {
+        const { userId } = req.params;
+        try {
+          const posts = await volunteerCollection.find({ userId, type: 'volunteerRequest' }); 
+          res.json(posts);
+        } catch (error) {
+          res.status(500).json({ message: "Error fetching posts" });
+        }
+      });
 
-      //     // Save the volunteer request to the database
-      //     await newVolunteerRequest.save();
+      // manage get api
+        app.get('/volunteer-needs', async(req, res)=>{
+          try {
+            const posts = await VolunteerPost.find();
+            res.json(posts);
+          } catch (error) {
+            res.status(500).json({ error: 'Error fetching posts' });
+          }
+        })
 
-      //     // Decrement the number of volunteers needed for the post
-      //     await volunteerCollection.findByIdAndUpdate(postId, {
-      //       $inc: { volunteers: -1 }, // Decrease the number of volunteers needed
-      //     });
-
-      //     res.status(200).json({ message: "Request submitted successfully" });
-      //   } catch (err) {
-      //     res.status(500).json({ message: "Error submitting volunteer request" });
-      //   }
-      // });
-
+       
+        // app.delete('/volunteer-needs/:id', async (req, res) => {
+        //   try {
+        //     const postId = req.params.id;
+        //     await VolunteerPost.findByIdAndDelete(postId);
+        //     res.json({ message: 'Post deleted successfully' });
+        //   } catch (error) {
+        //     res.status(500).json({ error: 'Error deleting post' });
+        //   }
+        // });
 
 
     // Connect the client to the server	(optional starting in v4.7)
