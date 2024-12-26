@@ -24,12 +24,10 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
 
-    const db = client.db('volunteer_management')
-    const volunteerCollection = db.collection('teem')
-
-    const volunteerApplicationCollection = client.db('volunteer_management').collection
-    const successCollection = db.collection('success_stories');
-    ('teem_application');
+    const db = client.db('volunteer_management');
+    const volunteerCollection = db.collection('teem');
+    const volunteerApplicationCollection = db.collection('applications');
+    
 
     app.get('/volunteer-needs-now', async (req, res) => {
       try {
@@ -71,7 +69,7 @@ async function run() {
     app.get('/volunteer-needs-application', async (req, res) => {
       const email = req.query.email;
       const query = {organizerEmail: email}
-      const result = await  volunteerApplicationCollection.find().toArray(query);
+      const result = await volunteerApplicationCollection.find(query).toArray();
 
       res.send(result);
     });
