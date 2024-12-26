@@ -177,7 +177,7 @@ async function run() {
             const upcomingEvents = await volunteerCollection
               .find()
               .sort({ deadline: 1 }) 
-              .limit(5) 
+              .limit(6) 
               .toArray();
             res.send(upcomingEvents);
           } catch (error) {
@@ -185,14 +185,14 @@ async function run() {
           }
         });
 
-          // Get all volunteer success stories
+       
+     //  get all success stories
       app.get('/volunteer-success-stories', async (req, res) => {
         try {
-          const stories = await successCollection.find().toArray();
+          const stories = await volunteerCollection.find().toArray();
           res.json(stories);
-        } catch (error) {
-          console.error('Error fetching success stories:', error);
-          res.status(500).json({ error: 'Failed to fetch success stories' });
+        } catch (err) {
+          res.status(500).json({ message: 'Error fetching success stories.' });
         }
       });
         
