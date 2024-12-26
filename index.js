@@ -28,6 +28,7 @@ async function run() {
     const volunteerCollection = db.collection('teem')
 
     const volunteerApplicationCollection = client.db('volunteer_management').collection
+    const successCollection = db.collection('success_stories');
     ('teem_application');
 
     app.get('/volunteer-needs-now', async (req, res) => {
@@ -52,7 +53,7 @@ async function run() {
 
   
    // Get id 
-    app.get("/volunteer/:id", async (req, res) => {
+    app.get('/volunteer/:id', async (req, res) => {
       const { id } = req.params;
       try {
           const post = await volunteerCollection.findOne({ _id: new ObjectId(id) });
@@ -65,18 +66,6 @@ async function run() {
           res.status(500).json({ message: "Error fetching post" });
       }
   });
-
-  // add post api DABBLE TAKLO FOLLOW
-    // app.post('/volunteer-needs-now', async (req, res) => {
-    //  try {
-    //   const newPost = req.body; 
-    //   const result = await volunteerCollection.insertOne(newPost); 
-    //   res.status(201).json({ message: 'Volunteer post added successfully!', data: result });
-    //  } catch (error) {
-    //   console.error('Error saving volunteer post:', error);
-    //   res.status(500).json({ message: 'Failed to add volunteer post.' });
-    //   }
-    //  });
 
     // volunteer application get
     app.get('/volunteer-needs-application', async (req, res) => {
@@ -109,8 +98,7 @@ async function run() {
           res.status(500).json({ message: "Error fetching post details" });
         }
       });
-      //     // Route to handle volunteer request submission
-    //   // volunteer-requests api
+     
      app.post("/volunteer-needs-application/:id", async(req, res)=>{
       const data = req.body;
       const result = await volunteerApplicationCollection.insertOne(data)
@@ -119,49 +107,95 @@ async function run() {
 
 
     // My Volunteer Need Post
-     app.get('/volunteerNeed/:userId', async (req, res) => {
-        const { userId } = req.params;
-        try {
-          const posts = await volunteerCollection.find({ userId, type: 'volunteerNeed' }); 
-          res.json(posts);
-        } catch (error) {
-          res.status(500).json({ message: "Error fetching posts" });
-        }
-      });
+    app.get('/volunteerNeed/:userId', async (req, res) => {
+      const { userId } = req.params;
+      const posts = await volunteerCollection.find({ userId, type: 'volunteerNeed' }).toArray();
+      res.json(posts);
+    });
 
       // My Volunteer Request Post
       app.get('/volunteerRequest/:userId', async (req, res) => {
         const { userId } = req.params;
-        try {
-          const posts = await volunteerCollection.find({ userId, type: 'volunteerRequest' }); 
-          res.json(posts);
-        } catch (error) {
-          res.status(500).json({ message: "Error fetching posts" });
-        }
+        const posts = await volunteerCollection.find({ userId, type: 'volunteerRequest' }).toArray();
+        res.json(posts);
       });
-
       // manage get api
         app.get('/volunteer-needs', async(req, res)=>{
           try {
-            const posts = await VolunteerPost.find();
+            const posts = await volunteerCollection.find().toArray();
             res.json(posts);
           } catch (error) {
             res.status(500).json({ error: 'Error fetching posts' });
           }
         })
+       
+    
 
-        // DELETE: Delete a specific post
+        //  Delete a specific post
         app.delete('/volunteer-needs/:id', async (req, res) => {
           try {
             const postId = req.params.id;
-            await VolunteerPost.findByIdAndDelete(postId);
-            res.json({ message: 'Post deleted successfully' });
+            const result = await volunteerCollection.deleteOne({ _id: new ObjectId(postId) });
+            res.json(result);
           } catch (error) {
             res.status(500).json({ error: 'Error deleting post' });
           }
         });
 
+     
 
+        // Update a put by ID
+     
+        app.put('/volunteer/:id', async (req, res) => {
+          const { id } = req.params;
+          try {
+            // Validate if the ID is valid
+            if (!ObjectId.isValid(id)) {
+              return res.status(400).json({ message: 'Invalid ID format' });
+            }
+    
+            // Perform the update
+            const updatedPost = await volunteerCollection.updateOne(
+              { _id: new ObjectId(id) },
+              { $set: req.body }
+            );
+    
+            if (updatedPost.matchedCount === 0) {
+              return res.status(404).json({ message: 'Post not found' });
+            }
+    
+            res.json({ message: 'Post updated successfully' });
+          } catch (error) {
+            res.status(500).json({ message: 'Error updating post', error });
+          }
+        });
+
+
+        // Add this route for fetching upcoming volunteer events
+        app.get('/upcoming-volunteer-events', async (req, res) => {
+          try {
+            const upcomingEvents = await volunteerCollection
+              .find()
+              .sort({ deadline: 1 }) 
+              .limit(5) 
+              .toArray();
+            res.send(upcomingEvents);
+          } catch (error) {
+            res.status(500).json({ error: 'Failed to fetch upcoming events' });
+          }
+        });
+
+          // Get all volunteer success stories
+      app.get('/volunteer-success-stories', async (req, res) => {
+        try {
+          const stories = await successCollection.find().toArray();
+          res.json(stories);
+        } catch (error) {
+          console.error('Error fetching success stories:', error);
+          res.status(500).json({ error: 'Failed to fetch success stories' });
+        }
+      });
+        
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
     // Send a ping to confirm a successful connection
