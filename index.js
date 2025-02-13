@@ -1,15 +1,43 @@
 const express = require('express');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser')
 const app = express();
 require('dotenv').config();
 const port = process.env.PORT || 9000;
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 
-app.use(cors());
+app.use(cors({
+  origin:[
+    'http://localhost:5174',
+    'volunteer-management-30e05.web.app',
+    'volunteer-management-30e05.firebaseapp.com'
+  ],
+  credentials: true
+}));
 app.use(express.json());
+app.use(cookieParser());
 
+const logger = (req,res, next)=>{
+  console.log('inside the logger');
+  next()
+}
 
+const verifyToken = (req,res,next)=>{
+  // console.log('inside verify token middleware', req.cookies)
+  const token = req?.cookies?.token
+  if(!token){
+    return res.status(401).send({message: 'Unauthorized access'})
+  }
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded)=>{
+    if (err){
+      return res.status(401).send({message: 'Authorized access'})
+    }
+    next();
+  })
+
+}
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.5di9a.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 console.log(uri)
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -23,13 +51,27 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-
+      //volunteer Apis
     const db = client.db('volunteer_management');
     const volunteerCollection = db.collection('teem');
     const volunteerApplicationCollection = db.collection('applications');
 
 
-    app.get('/volunteer-needs-now', async (req, res) => {
+    //Auth APIs
+    app.post("/jwt", async(req, res) =>{
+      const user = req.body;
+      const token = jwt.sign(user, process.env.JWT_SECRET,{expiresIn: '5h'});
+      res
+      .cookie('token', token,{
+        httpOnly: true,
+        secure: false,
+
+      })
+      .send({success: true});
+
+    })
+
+    app.get('/volunteer-needs-now',logger, async (req, res) => {
       try {
         const result = await volunteerCollection
           .find()
@@ -45,10 +87,10 @@ async function run() {
 
     // Get all posts
     app.get('/all-volunteer-posts', async (req, res) => {
+      // console.log('all volunteer', req.cookies);
       const posts = await volunteerCollection.find({}).sort({ deadline: 1 }).toArray();
       res.send(posts);
     });
-
 
     // Get id 
     app.get('/volunteer/:id', async (req, res) => {
@@ -66,9 +108,12 @@ async function run() {
     });
 
     // volunteer application get
-    app.get('/volunteer-needs-application', async (req, res) => {
+    app.get('/volunteer-needs-application',verifyToken, async (req, res) => {
       const email = req.query.email;
       const query = { organizerEmail: email }
+      if(req.user.email !== req.query.email){
+        return res.status(403).send({message: 'forbidden access'})
+      }
       const result = await volunteerApplicationCollection.find(query).toArray();
 
       res.send(result);
@@ -76,13 +121,13 @@ async function run() {
 
 
     // volunteer application post
-    app.post('/volunteer-needs-application', async (req, res) => {
+    app.post('/volunteer-needs-application',async (req, res) => {
       const application = req.body;
       const result = await volunteerApplicationCollection.insertOne(application);
       res.send(result)
 
     });
-
+     
 
     // Route to fetch post details
     app.get("/volunteer-needs-application/:postId", async (req, res) => {
